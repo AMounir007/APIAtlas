@@ -40,12 +40,20 @@ public class TrafficPublisher {
             return false;
         }
         try {
-            kafka.send(topic, key, payload);
+            kafka.send(topic, key, payload).whenComplete((result, ex) -> {
+                if (ex != null) {
+                    pause(ex);
+                }
+            });
             return true;
         } catch (Exception ex) {
-            disabledUntil = System.currentTimeMillis() + BACKOFF_MS;
-            log.warn("Kafka unavailable, event publishing paused for {}s: {}", BACKOFF_MS / 1000, ex.getMessage());
+            pause(ex);
             return false;
         }
+    }
+
+    private void pause(Throwable ex) {
+        disabledUntil = System.currentTimeMillis() + BACKOFF_MS;
+        log.warn("Kafka unavailable, event publishing paused for {}s: {}", BACKOFF_MS / 1000, ex.getMessage());
     }
 }

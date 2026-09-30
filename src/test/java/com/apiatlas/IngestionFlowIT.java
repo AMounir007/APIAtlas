@@ -38,6 +38,7 @@ class IngestionFlowIT {
         r.add("spring.cache.type", () -> "simple");
         r.add("spring.kafka.listener.auto-startup", () -> "false");
         r.add("spring.kafka.admin.auto-create", () -> "false");
+        r.add("spring.kafka.producer.properties.max.block.ms", () -> "500");
         r.add("apiatlas.discovery.proxy.ingest-token", () -> "it-token");
         r.add("ATLAS_ADMIN_PASSWORD", () -> "it-password");
     }
