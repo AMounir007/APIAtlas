@@ -1,0 +1,103 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: apiatlas
+      POSTGRES_USER: apiatlas
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apiatlas"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+
+  kafka:
+    image: apache/kafka:3.8.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+  api-atlas:
+    build: .
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      kafka: {condition: service_started}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/apiatlas
+      DB_USERNAME: apiatlas
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      MITM_INGEST_TOKEN: ${MITM_INGEST_TOKEN:?set MITM_INGEST_TOKEN in .env}
+      ATLAS_ADMIN_USER: ${ATLAS_ADMIN_USER:-admin}
+      ATLAS_ADMIN_PASSWORD: ${ATLAS_ADMIN_PASSWORD:?set ATLAS_ADMIN_PASSWORD in .env}
+      CORS_ORIGINS: http://localhost:3000
+      AI_ENABLED: ${AI_ENABLED:-false}
+      AI_API_KEY: ${AI_API_KEY:-}
+      MITM_HOST: mitmproxy
+      MITM_PORT: 8081
+    ports:
+      - "8080:8080"
+    shm_size: "1gb"   # Chromium needs a larger /dev/shm
+
+  frontend:
+    build: ./frontend
+    depends_on: [api-atlas]
+    ports:
+      - "3000:80"
+
+  mitmproxy:
+    image: mitmproxy/mitmproxy:10
+    command: mitmdump --listen-port 8081 -s /addons/atlas_addon.py
+    environment:
+      ATLAS_INGEST_URL: http://api-atlas:8080/api/traffic/ingest
+      ATLAS_INGEST_TOKEN: ${MITM_INGEST_TOKEN}
+      ATLAS_SESSION_ID: ${ATLAS_SESSION_ID:-}
+    volumes:
+      - ./docker/mitm:/addons:ro
+      - mitmdata:/home/mitmproxy/.mitmproxy
+    ports:
+      - "8081:8081"
+    depends_on: [api-atlas]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?set GRAFANA_PASSWORD in .env}
+    volumes:
+      - ./docker/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on: [prometheus]
+
+volumes:
+  pgdata:
+  mitmdata:
+  grafanadata:

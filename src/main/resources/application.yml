@@ -50,10 +50,16 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.apiatlas.dto"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.apiatlas.dto.CapturedTraffic
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
+      properties:
+        max.block.ms: 3000
+    listener:
+      missing-topics-fatal: false
 
   servlet:
     multipart:

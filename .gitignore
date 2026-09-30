@@ -36,3 +36,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Project ###
+.idea/
+.env
+node_modules/
+frontend/dist/
+*.log

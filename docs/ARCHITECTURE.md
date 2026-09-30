@@ -97,7 +97,7 @@ sequenceDiagram
     loop each page / screen
         C->>C: navigate, click, submit forms
         C->>M: traffic (mobile) / listeners (web)
-        M->>API: POST /api/ingest/traffic
+        M->>API: POST /api/traffic/ingest
         C->>K: captured-traffic event
     end
     K->>N: consume

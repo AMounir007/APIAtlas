@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: api-atlas
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-atlas-config
+  namespace: api-atlas
+data:
+  SPRING_PROFILES_ACTIVE: prod
+  DB_URL: jdbc:postgresql://postgres:5432/apiatlas
+  DB_USERNAME: apiatlas
+  REDIS_HOST: redis
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  CORS_ORIGINS: https://atlas.example.com
+  AI_ENABLED: "false"
+
