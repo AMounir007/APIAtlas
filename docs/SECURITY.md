@@ -14,7 +14,7 @@
 2. Terminate TLS in front of the API (Ingress) and restrict `CORS_ORIGINS` to your dashboard origin.
 3. Restrict network access to `/actuator/prometheus` (it is unauthenticated so that Prometheus can scrape it).
 4. The dashboard stores the JWT in `sessionStorage`; keep the dashboard free of third-party scripts.
-5. Discovery makes the server fetch URLs supplied by authenticated users (SSRF surface). Run the backend in a network segment that cannot reach sensitive internal services, or add an allow-list of permitted targets.
+5. Discovery makes the server fetch URLs supplied by authenticated users (SSRF surface). Set `ATLAS_ALLOWED_HOSTS` (comma-separated, e.g. `example.com,staging.example.org`; subdomains are included) to restrict web discovery targets. It is empty (allow all) by default - set it in every shared environment. Also run the backend in a network segment that cannot reach sensitive internal services.
 6. Captured payloads may contain personal data. Define a retention policy; the number of stored request/response samples per endpoint is capped at 25.
 
 ## Known limitations

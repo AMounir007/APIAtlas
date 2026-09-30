@@ -51,6 +51,7 @@ services:
       ATLAS_ADMIN_USER: ${ATLAS_ADMIN_USER:-admin}
       ATLAS_ADMIN_PASSWORD: ${ATLAS_ADMIN_PASSWORD:?set ATLAS_ADMIN_PASSWORD in .env}
       CORS_ORIGINS: http://localhost:3000
+      ATLAS_ALLOWED_HOSTS: ${ATLAS_ALLOWED_HOSTS:-}
       AI_ENABLED: ${AI_ENABLED:-false}
       AI_API_KEY: ${AI_API_KEY:-}
       MITM_HOST: mitmproxy

@@ -37,10 +37,14 @@ public class DiscoveryService {
     private final TrafficPublisher publisher;
     private final ExecutorService pool;
     private final Map<Long, AtomicBoolean> running = new ConcurrentHashMap<>();
+    private final List<String> allowedHosts;
 
     public DiscoveryService(AtlasProperties props, DiscoverySessionRepository sessions, WebCrawler webCrawler,
                             MobileExplorer mobileExplorer, TrafficIngestionService ingestion, AiAnalysisService ai,
-                            TrafficPublisher publisher) {
+                            TrafficPublisher publisher,
+                            @org.springframework.beans.factory.annotation.Value("${ATLAS_ALLOWED_HOSTS:}") String allowed) {
+        this.allowedHosts = java.util.Arrays.stream(allowed.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).map(s -> s.toLowerCase(java.util.Locale.ROOT)).toList();
         this.props = props;
         this.sessions = sessions;
         this.webCrawler = webCrawler;
@@ -121,7 +125,7 @@ public class DiscoveryService {
         }
     }
 
-    private static void validate(StartDiscoveryRequest req) {
+    private void validate(StartDiscoveryRequest req) {
         if (req.type() == SessionType.WEB) {
             URI u;
             try {
@@ -131,6 +135,13 @@ public class DiscoveryService {
             }
             if (u.getHost() == null || !("http".equals(u.getScheme()) || "https".equals(u.getScheme()))) {
                 throw new IllegalArgumentException("Web target must be an http(s) URL");
+            }
+            if (!allowedHosts.isEmpty()) {
+                String host = u.getHost().toLowerCase(java.util.Locale.ROOT);
+                boolean ok = allowedHosts.stream().anyMatch(a -> host.equals(a) || host.endsWith("." + a));
+                if (!ok) {
+                    throw new IllegalArgumentException("Target host is not in ATLAS_ALLOWED_HOSTS");
+                }
             }
         }
     }

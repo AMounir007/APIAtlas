@@ -30,5 +30,5 @@ environment yet (no terminal was available), so run `mvn verify` and `npm run bu
 - Integration tests with Testcontainers (`*IT.java`, picked up by failsafe)
 - User management and roles (currently one admin from environment variables)
 - Schema inference (JSON Schema in OpenAPI components), GraphQL/gRPC/SOAP-specific documentation
-- Target allow-list for discovery, retention jobs for captured payloads
+- Retention jobs for captured payloads
 - Grafana dashboards, alerting rules
