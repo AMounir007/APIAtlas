@@ -1,0 +1,154 @@
+spring:
+  application:
+    name: api-atlas
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/apiatlas}
+    username: ${DB_USERNAME:apiatlas}
+    password: ${DB_PASSWORD:apiatlas}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.batch_size: 50
+        order_inserts: true
+        format_sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5s
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10m
+      cache-null-values: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: api-atlas
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.apiatlas.dto"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  compression:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    com.apiatlas: ${LOG_LEVEL:DEBUG}
+
+apiatlas:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-to-a-256-bit-secret-change-me-to-a-256-bit-secret}
+      expiration: ${JWT_EXPIRATION:PT8H}
+      issuer: api-atlas
+    cors:
+      allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+  kafka:
+    topics:
+      captured-traffic: apiatlas.traffic.captured
+      endpoint-discovered: apiatlas.endpoint.discovered
+      analysis-requested: apiatlas.analysis.requested
+  discovery:
+    max-concurrent-sessions: ${DISCOVERY_MAX_SESSIONS:5}
+    web:
+      default-browser: chromium   # chromium | firefox | webkit | msedge
+      headless: true
+      max-depth: 3
+      max-pages: 200
+      navigation-timeout: 30s
+      same-origin-only: true
+    mobile:
+      appium-url: ${APPIUM_URL:http://localhost:4723}
+      max-actions: 300
+    proxy:
+      host: ${MITM_HOST:localhost}
+      port: ${MITM_PORT:8081}
+      ingest-token: ${MITM_INGEST_TOKEN:change-me}
+    capture:
+      max-body-size: 1048576
+      excluded-extensions: [".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".woff", ".woff2", ".ico", ".map"]
+      masked-headers: ["authorization", "cookie", "set-cookie", "x-api-key"]
+  ai:
+    enabled: ${AI_ENABLED:false}
+    provider: ${AI_PROVIDER:openai}
+    base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:gpt-4o-mini}
+    timeout: 60s
+  analysis:
+    unused-threshold: P30D
+    duplicate-similarity: 0.9
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+logging:
+  level:
+    org.hibernate.SQL: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+logging:
+  level:
+    com.apiatlas: INFO
