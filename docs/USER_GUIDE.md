@@ -53,4 +53,5 @@ Set `AI_ENABLED=true` and `AI_API_KEY`. Without it, deterministic heuristics fil
 | 401 on every call | token expired; sign in again |
 | No endpoints after web discovery | target requires login (pass headers via the API `headers` field) or blocks headless browsers |
 | Mobile: no traffic | proxy configured on the device, CA installed, correct `ATLAS_SESSION_ID`, ingest token matches |
+| "Target host is not in ATLAS_ALLOWED_HOSTS" | ask an administrator to add the host to `ATLAS_ALLOWED_HOSTS` |
 | Events not published | Kafka unreachable - publishing pauses for 60 s and ingestion continues |

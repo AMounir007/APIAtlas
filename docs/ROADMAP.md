@@ -27,7 +27,8 @@ environment yet (no terminal was available), so run `mvn verify` and `npm run bu
 | Playwright / Appium discovery against a real target | not run yet |
 
 ## Next steps
-- Integration tests with Testcontainers (`*IT.java`, picked up by failsafe)
+- More integration tests (discovery sessions, Kafka flow, AI enrichment with a stubbed LLM)
+
 - User management and roles (currently one admin from environment variables)
 - Schema inference (JSON Schema in OpenAPI components), GraphQL/gRPC/SOAP-specific documentation
 - Retention jobs for captured payloads

@@ -50,7 +50,7 @@ docs/                     documentation
 | [ROADMAP](docs/ROADMAP.md) | phases and verification status |
 
 ## Responsible use
-Only discover APIs of applications you own or are authorized to test. Captured traffic can contain personal data; review [docs/SECURITY.md](docs/SECURITY.md) before production use.
+Only discover APIs of applications you own or are authorized to test. Restrict discovery targets with `ATLAS_ALLOWED_HOSTS`. Captured traffic can contain personal data; review [docs/SECURITY.md](docs/SECURITY.md) before production use.
 
 ## License
 Proprietary (update as needed).

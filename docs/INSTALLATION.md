@@ -61,6 +61,7 @@ Adjust the image name in `k8s/deployment.yaml` and the host in `k8s/service.yaml
 Deployment is skipped unless the repository secret `KUBE_CONFIG` (base64 kubeconfig) is set. Create a `production` environment with required reviewers for manual approval.
 
 ## 6. Configuration
+Set `ATLAS_ALLOWED_HOSTS` (e.g. `example.com,staging.example.org`) to restrict which web targets discovery may scan; leave it empty only on a trusted local machine.
 All settings live under `apiatlas.*` (see [CONFIGURATION.md](CONFIGURATION.md)) and can be overridden with environment variables (`DB_URL`, `JWT_SECRET`, `MITM_INGEST_TOKEN`, `AI_ENABLED`, `AI_API_KEY`, ...).
 
 ## 7. Mobile setup (mitmproxy)

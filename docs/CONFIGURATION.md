@@ -53,38 +53,52 @@ Enable binding with `@ConfigurationPropertiesScan` on the application class or `
 | `unused-threshold` | Duration | Inactivity age to flag an API unused |
 | `duplicate-similarity` | double | Duplicate threshold (0..1) |
 
-## Example
-```yaml
-apiatlas:
-  security:
-    jwt:
-      secret: ${JWT_SECRET:change-me}
-      expiration: 12h
-      issuer: api-atlas
-    cors:
-      allowed-origins: [http://localhost:3000]
-  kafka:
-    topics:
-      captured-traffic: apiatlas.captured-traffic
-      endpoint-discovered: apiatlas.endpoint-discovered
-      analysis-requested: apiatlas.analysis-requested
-  discovery:
-    max-concurrent-sessions: 5
-    web: {default-browser: chromium, headless: true, max-depth: 4, max-pages: 500, navigation-timeout: 20s, same-origin-only: true}
-    mobile: {appium-url: "http://localhost:4723", max-actions: 200}
-    proxy: {host: localhost, port: 8080, ingest-token: "${INGEST_TOKEN:local-token}"}
-    capture:
-      max-body-size: 1048576
-      excluded-extensions: [png, jpg, css, js]
-      masked-headers: [Authorization, Cookie, Set-Cookie]
-  ai:
-    enabled: true
-    provider: openai
-    base-url: https://api.openai.com
-    api-key: ${AI_API_KEY:}
-    model: gpt-4o-mini
-    timeout: 30s
-  analysis:
-    unused-threshold: 30d
-    duplicate-similarity: 0.9
+## Environment variables
+| Variable | Default | Purpose |
 ```
+    duplicate-similarity: 0.9
+    unused-threshold: 30d
+  analysis:
+    timeout: 30s
+    model: gpt-4o-mini
+    api-key: ${AI_API_KEY:}
+    base-url: https://api.openai.com
+    provider: openai
+    enabled: true
+  ai:
+      masked-headers: [Authorization, Cookie, Set-Cookie]
+      excluded-extensions: [png, jpg, css, js]
+      max-body-size: 1048576
+    capture:
+    proxy: {host: localhost, port: 8080, ingest-token: "${INGEST_TOKEN:local-token}"}
+    mobile: {appium-url: "http://localhost:4723", max-actions: 200}
+    web: {default-browser: chromium, headless: true, max-depth: 4, max-pages: 500, navigation-timeout: 20s, same-origin-only: true}
+    max-concurrent-sessions: 5
+  discovery:
+      analysis-requested: apiatlas.analysis-requested
+      endpoint-discovered: apiatlas.endpoint-discovered
+      captured-traffic: apiatlas.captured-traffic
+    topics:
+  kafka:
+      allowed-origins: [http://localhost:3000]
+    cors:
+      issuer: api-atlas
+      expiration: 12h
+      secret: ${JWT_SECRET:change-me}
+    jwt:
+  security:
+apiatlas:
+```yaml
+## Example (structure of `apiatlas.*`; see `application.yml` for the real defaults)
+
+| `DISCOVERY_MAX_SESSIONS` | 5 | concurrent discovery sessions |
+| `AI_ENABLED`, `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | disabled | LLM enrichment |
+| `CORS_ORIGINS` | `http://localhost:3000` | allowed dashboard origins |
+| `ATLAS_ALLOWED_HOSTS` | empty (allow all) | comma-separated hosts (subdomains included) allowed as web discovery targets |
+| `MITM_INGEST_TOKEN` | `change-me` | token for `/api/traffic/ingest` |
+| `ATLAS_ADMIN_USER` / `ATLAS_ADMIN_PASSWORD` | `admin` / `admin123` | dashboard login (change the password) |
+| `JWT_SECRET` | dev value | JWT signing key (>= 32 bytes, required in production) |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | messaging |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | localhost | cache |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | local PostgreSQL | database connection |
+|---|---|---|
