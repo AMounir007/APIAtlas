@@ -37,6 +37,7 @@ class IngestionFlowIT {
         r.add("spring.datasource.password", POSTGRES::getPassword);
         r.add("spring.cache.type", () -> "simple");
         r.add("spring.kafka.listener.auto-startup", () -> "false");
+        r.add("spring.kafka.admin.auto-create", () -> "false");
         r.add("apiatlas.discovery.proxy.ingest-token", () -> "it-token");
         r.add("ATLAS_ADMIN_PASSWORD", () -> "it-password");
     }
