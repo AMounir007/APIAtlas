@@ -57,8 +57,8 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       MITM_HOST: mitmproxy
       MITM_PORT: 8081
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"        # reachable only through the frontend proxy / compose network
     shm_size: "1gb"   # Chromium needs a larger /dev/shm
 
   frontend:
