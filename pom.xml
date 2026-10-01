@@ -26,7 +26,7 @@
         <appium.version>10.1.1</appium.version>
         <swagger-parser.version>2.1.22</swagger-parser.version>
         <poi.version>5.4.0</poi.version>
-        <openpdf.version>2.0.3</openpdf.version>
+        <openpdf.version>3.0.5</openpdf.version>
         <commons-csv.version>1.12.0</commons-csv.version>
         <mapstruct.version>1.6.2</mapstruct.version>
         <testcontainers.version>1.20.2</testcontainers.version>
