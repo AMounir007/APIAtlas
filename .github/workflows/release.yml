@@ -1,10 +1,9 @@
-name: Release
+name: Release (release-please - disabled, superseded by auto-release.yml)
 
-# Automates versioning, CHANGELOG.md, git tags and GitHub Releases
-# from Conventional Commits (feat:, fix:, test:, docs:, feat!: ...).
+# DISABLED: releases are now produced by .github/workflows/auto-release.yml on every push.
+# Kept only for manual runs; delete this file, release-please-config.json and .release-please-manifest.json if unused.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write

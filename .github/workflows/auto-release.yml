@@ -1,0 +1,135 @@
+name: Auto Release
+
+# Every push to main/master: bump the patch version, update pom.xml, tag, create a GitHub Release and trigger JitPack.
+# Loop protection: the version-bump commit carries [skip ci], and runs by github-actions[bot] are ignored.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      next_version:
+        description: "Optional: force the next version (e.g. 1.2.0). Must be higher than the latest tag."
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
+
+env:
+  JITPACK_USER: AMounir007
+  JITPACK_REPO: APIAtlas
+  # Used only when no semver tag exists yet, or when it is higher than latest tag + 1 patch.
+  DEFAULT_NEXT_VERSION: "1.1.0"
+
+jobs:
+  release:
+    name: Bump, tag, release, JitPack
+    runs-on: ubuntu-latest
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Compute next version
+        id: ver
+        env:
+          FORCED: ${{ github.event.inputs.next_version }}
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          # accept both "1.2.3" and "v1.2.3" tags, never reuse either spelling
+          latest=$(git tag --list | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+          base="${FORCED:-$DEFAULT_NEXT_VERSION}"
+          if [ -z "$latest" ]; then
+            version="$base"
+          else
+            IFS=. read -r major minor patch <<< "$latest"
+            candidate="$major.$minor.$((patch + 1))"
+            # use the configured base only when it is higher than the natural next patch
+            version=$(printf '%s\n%s\n' "$candidate" "$base" | sort -V | tail -1)
+            [ -n "$FORCED" ] && version="$FORCED"
+          fi
+          # never reuse an existing tag
+          while git rev-parse -q --verify "refs/tags/$version" >/dev/null || git rev-parse -q --verify "refs/tags/v$version" >/dev/null; do
+            IFS=. read -r major minor patch <<< "$version"
+            version="$major.$minor.$((patch + 1))"
+          done
+          echo "Latest tag: ${latest:-none}  ->  releasing $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set version in pom.xml
+        run: mvn -B -q versions:set -DnewVersion=${{ steps.ver.outputs.version }} -DgenerateBackupPoms=false
+
+      - name: Build (compile check)
+        run: mvn -B clean install -DskipTests
+
+      - name: Commit version, tag and push
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit -m "chore(release): $VERSION [skip ci]" || echo "pom.xml already at $VERSION"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "HEAD:$BRANCH" "$VERSION"
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" {f=1; next}
+            /^## \[/ {f=0}
+            f' CHANGELOG.md > release-notes.md 2>/dev/null || true
+          if [ -s release-notes.md ] && grep -q '[^[:space:]]' release-notes.md; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No '## [$VERSION]' section in CHANGELOG.md - falling back to generated notes."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: ${{ steps.ver.outputs.version }}
+          body_path: ${{ steps.notes.outputs.found == 'true' && 'release-notes.md' || '' }}
+          generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
+
+      - name: Trigger JitPack build and wait
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -uo pipefail
+          api="https://jitpack.io/api/builds/com.github.${JITPACK_USER}/${JITPACK_REPO}/${VERSION}"
+          # Requesting the artifact also starts a build on JitPack's side.
+          curl -s -o /dev/null -m 60 "https://jitpack.io/com/github/${JITPACK_USER}/${JITPACK_REPO}/${VERSION}/${JITPACK_REPO}-${VERSION}.pom" || true
+          for i in $(seq 1 60); do
+            body=$(curl -s -m 60 "$api" || true)
+            status=$(echo "$body" | jq -r '.status // empty' 2>/dev/null || true)
+            echo "[$i/60] JitPack status: ${status:-pending}"
+            case "$status" in
+              ok)    echo "### JitPack build OK for $VERSION" >> "$GITHUB_STEP_SUMMARY"; exit 0 ;;
+              error) echo "::error::JitPack build failed. Log: https://jitpack.io/com/github/${JITPACK_USER}/${JITPACK_REPO}/${VERSION}/build.log"
+                     echo "### JitPack build FAILED for $VERSION" >> "$GITHUB_STEP_SUMMARY"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "::error::Timed out waiting for JitPack (30 min). Check https://jitpack.io/#${JITPACK_USER}/${JITPACK_REPO}"
+          exit 1

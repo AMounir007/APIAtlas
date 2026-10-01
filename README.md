@@ -56,6 +56,29 @@ docs/                     documentation
 | [SECURITY](docs/SECURITY.md) | controls, deployment checklist, limitations |
 | [ROADMAP](docs/ROADMAP.md) | phases and verification status |
 
+## Releasing
+Releases are **automatic**: every push to `main` runs `.github/workflows/auto-release.yml`, which bumps the patch
+version, updates `pom.xml` (commit `chore(release): X.Y.Z [skip ci]`), pushes the tag `X.Y.Z` (no `v` prefix), publishes
+a GitHub Release using the matching `## [X.Y.Z]` section of [CHANGELOG.md](CHANGELOG.md) (or generated notes), and triggers
+JitPack. To release a specific version, add its `## [X.Y.Z]` section to the changelog and start the workflow manually
+with `next_version`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Use as a dependency (JitPack)
+[![](https://jitpack.io/v/AMounir007/APIAtlas.svg)](https://jitpack.io/#AMounir007/APIAtlas)
+
+```xml
+<repositories>
+  <repository><id>jitpack.io</id><url>https://jitpack.io</url></repository>
+</repositories>
+<dependency>
+  <groupId>com.github.AMounir007</groupId>
+  <artifactId>APIAtlas</artifactId>
+  <version>1.1.0</version> <!-- use the latest release -->
+</dependency>
+```
+JitPack overrides the `groupId` and `artifactId` from `pom.xml` (`com.apiatlas:api-atlas`) with the coordinates above.
+Note that the artifact is a Spring Boot application jar.
+
 ## Responsible use
 Only discover APIs of applications you own or are authorized to test. Restrict discovery targets with `ATLAS_ALLOWED_HOSTS`. Captured traffic can contain personal data; review [docs/SECURITY.md](docs/SECURITY.md) before production use.
 

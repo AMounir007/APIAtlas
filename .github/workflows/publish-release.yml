@@ -10,10 +10,7 @@ on:
         description: "Tag to publish, e.g. v1.1.0 (needs RELEASE_NOTES_<tag>.md in the repo)"
         required: true
         default: "v1.1.0"
-  push:
-    tags: ["v*"]
-    branches: [main]
-    paths: ["RELEASE_NOTES_v*.md"]
+  # push triggers removed: auto-release.yml now creates releases on every push (manual runs only here)
 
 permissions:
   contents: write

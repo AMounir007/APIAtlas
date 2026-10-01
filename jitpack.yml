@@ -1,0 +1,6 @@
+jdk:
+  - openjdk21
+# No maven-enforcer-plugin in this project, so JitPack's default Maven is sufficient.
+# Skip tests (ITs need Docker) but still build sources and javadoc jars.
+install:
+  - mvn clean install -DskipTests -B
