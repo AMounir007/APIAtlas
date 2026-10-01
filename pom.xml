@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
-        <playwright.version>1.47.0</playwright.version>
+        <playwright.version>1.63.0</playwright.version>
         <appium.version>10.1.1</appium.version>
         <swagger-parser.version>2.1.22</swagger-parser.version>
         <poi.version>5.4.0</poi.version>
