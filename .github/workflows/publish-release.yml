@@ -1,0 +1,43 @@
+name: Publish release from notes file
+
+# Creates a GitHub Release (shown under Releases and in followers' feeds) from RELEASE_NOTES_<tag>.md.
+# Run it from Actions -> "Publish release from notes file" -> Run workflow, or push a tag such as v1.1.0.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish, e.g. v1.1.0 (needs RELEASE_NOTES_<tag>.md in the repo)"
+        required: true
+        default: "v1.1.0"
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          file="RELEASE_NOTES_${TAG}.md"
+          if [ ! -f "$file" ]; then
+            echo "::error::$file not found; add it to the repo first"
+            exit 1
+          fi
+          # Drop the internal "Publishing" hint; the summary header must stay at the top of the body.
+          grep -v '^> \*\*Publishing' "$file" > notes.md
+          title=$(head -1 notes.md | sed 's/^# *//')
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$title" --notes-file notes.md
+          else
+            gh release create "$TAG" --target "${{ github.sha }}" --title "$title" --notes-file notes.md
+          fi
+          echo "### Published $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/${{ github.repository }}/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
