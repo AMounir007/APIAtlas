@@ -34,6 +34,14 @@ Date: 2026-10-01. Previous release: v1.0.0 (`RELEASE_NOTES.md`).
 ## Tests
 - New `HardeningTest` covers the URL guard, the secrets guard, mobile validation and mask-before-truncate. Verify: the file was scrambled when last read back and may need to be recreated.
 
+## CI/CD and automation
+- **CI/CD** (`ci.yml`): can now be started manually (`workflow_dispatch`); a newer push cancels an older run on the same branch.
+- **Security scans** (new `security.yml`): CodeQL for Java and JavaScript, dependency review on pull requests (fails on high severity), and Trivy for dependencies, secrets and config. Runs on push, pull request, weekly and on demand; results appear in the Security tab.
+- **Dependabot** (new `dependabot.yml`): weekly update pull requests for Maven, npm, GitHub Actions and both Dockerfiles.
+- **Automatic releases** (new `publish-release.yml`): pushing a `RELEASE_NOTES_v*.md` file to `main` publishes the matching GitHub Release with its summary header. It can also be run by hand or by pushing a `v*` tag.
+- **Release summary header** (`release.yml`): releases created by release-please get a "Heads-up / counts / Highlights" header at the top of their notes.
+- **README**: release, last-commit and changelog badges, plus a "What's new / Watch → Releases" line.
+
 ## Documentation and process
 - Added `docs/CODE_REVIEW.md` and `docs/SECURITY_REVIEW.md`.
 - Added the automated release workflow (release-please), `CONTRIBUTING.md` and the Conventional Commits convention.
