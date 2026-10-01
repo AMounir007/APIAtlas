@@ -13,7 +13,7 @@
 
     <groupId>com.apiatlas</groupId>
     <artifactId>api-atlas</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <name>API Atlas</name>
     <description>API Atlas - Discover. Map. Document. AI-powered API discovery and documentation platform.</description>
 
