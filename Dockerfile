@@ -7,7 +7,7 @@ COPY src ./src
 RUN mvn -B -q clean package -DskipTests
 
 # ---- runtime (includes Chromium/Firefox/WebKit system deps for Playwright) ----
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     JAVA_OPTS="-XX:MaxRAMPercentage=75"
 WORKDIR /app
