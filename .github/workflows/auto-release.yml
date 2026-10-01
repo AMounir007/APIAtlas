@@ -88,29 +88,23 @@ jobs:
           git tag -a "$VERSION" -m "Release $VERSION"
           git push origin "HEAD:$BRANCH" "$VERSION"
 
-      - name: Extract release notes from CHANGELOG.md
-        id: notes
+      - name: Build release notes
+        # Summary + highlights first (shown on the feed card), then changes grouped by type with a
+        # "why it matters" line, upgrade notes, install snippet and full changelog. Uses the matching
+        # CHANGELOG.md section when present; otherwise builds everything from Conventional Commits.
         env:
           VERSION: ${{ steps.ver.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
-          awk -v v="$VERSION" '
-            $0 ~ "^## \\[" v "\\]" {f=1; next}
-            /^## \[/ {f=0}
-            f' CHANGELOG.md > release-notes.md 2>/dev/null || true
-          if [ -s release-notes.md ] && grep -q '[^[:space:]]' release-notes.md; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No '## [$VERSION]' section in CHANGELOG.md - falling back to generated notes."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
+          bash .github/scripts/release-notes.sh "$VERSION" "$REPO" release-notes.md
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.version }}
-          name: ${{ steps.ver.outputs.version }}
-          body_path: ${{ steps.notes.outputs.found == 'true' && 'release-notes.md' || '' }}
-          generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
+          name: API Atlas ${{ steps.ver.outputs.version }}
+          body_path: release-notes.md
 
       - name: Trigger JitPack build and wait
         env:

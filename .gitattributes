@@ -1,0 +1,4 @@
+# Shell scripts and workflows run on Linux runners: always store them with LF line endings.
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
