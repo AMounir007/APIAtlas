@@ -20,7 +20,7 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jjwt.version>0.12.6</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <playwright.version>1.47.0</playwright.version>
         <appium.version>10.1.1</appium.version>
