@@ -132,6 +132,7 @@ class IngestionFlowIT {
 
         // OpenAPI output is valid JSON with the normalised path and no raw secrets
         byte[] swagger = rest.exchange("/api/export/swagger", HttpMethod.GET, auth(null), byte[].class).getBody();
+        assertNotNull(swagger);
         String spec = new String(swagger, java.nio.charset.StandardCharsets.UTF_8);
         assertTrue(spec.contains("/api/v1/users/{id}"));
         assertFalse(spec.contains("hunter2"));
