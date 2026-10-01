@@ -52,6 +52,7 @@ services:
       ATLAS_ADMIN_PASSWORD: ${ATLAS_ADMIN_PASSWORD:?set ATLAS_ADMIN_PASSWORD in .env}
       CORS_ORIGINS: http://localhost:3000
       ATLAS_ALLOWED_HOSTS: ${ATLAS_ALLOWED_HOSTS:-}
+      ATLAS_ALLOW_PRIVATE_TARGETS: ${ATLAS_ALLOW_PRIVATE_TARGETS:-false}
       AI_ENABLED: ${AI_ENABLED:-false}
       AI_API_KEY: ${AI_API_KEY:-}
       MITM_HOST: mitmproxy
@@ -77,7 +78,7 @@ services:
       - ./docker/mitm:/addons:ro
       - mitmdata:/home/mitmproxy/.mitmproxy
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"   # unauthenticated proxy: use a tunnel/VPN for devices
     depends_on: [api-atlas]
 
   prometheus:
@@ -85,7 +86,7 @@ services:
     volumes:
       - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
 
   grafana:
     image: grafana/grafana:11.2.0
@@ -95,7 +96,7 @@ services:
       - ./docker/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - grafanadata:/var/lib/grafana
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     depends_on: [prometheus]
 
 volumes:

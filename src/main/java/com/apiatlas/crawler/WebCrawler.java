@@ -48,7 +48,17 @@ public class WebCrawler {
             Browser browser = launch(pw, req.browser() != null ? req.browser() : web.defaultBrowser(), web.headless());
             try (BrowserContext ctx = browser.newContext()) {
                 if (req.headers() != null && !req.headers().isEmpty()) {
-                    ctx.setExtraHTTPHeaders(req.headers());
+                    // Caller-supplied headers (e.g. Authorization) go to the start origin only, never to third parties.
+                    Map<String, String> extra = req.headers();
+                    ctx.route("**/*", route -> {
+                        if (sameOrigin(start, route.request().url())) {
+                            Map<String, String> merged = new HashMap<>(route.request().headers());
+                            merged.putAll(extra);
+                            route.resume(new Route.ResumeOptions().setHeaders(merged));
+                        } else {
+                            route.resume();
+                        }
+                    });
                 }
                 ctx.onResponse(r -> capture(sessionId, r));
                 Page page = ctx.newPage();
@@ -134,6 +144,23 @@ public class WebCrawler {
         } catch (IllegalArgumentException ex) {
             return false;
         }
+    }
+
+    private static boolean sameOrigin(URI start, String url) {
+        try {
+            URI u = URI.create(url);
+            return u.getScheme() != null && u.getHost() != null
+                    && u.getScheme().equalsIgnoreCase(start.getScheme())
+                    && u.getHost().equalsIgnoreCase(start.getHost())
+                    && effectivePort(u) == effectivePort(start);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    private static int effectivePort(URI u) {
+        if (u.getPort() > 0) return u.getPort();
+        return "https".equalsIgnoreCase(u.getScheme()) ? 443 : 80;
     }
 
     private static String stripFragment(String url) {

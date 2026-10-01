@@ -19,7 +19,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.regex.Pattern;
 
 /**
  * Appium based explorer. Traffic itself is captured by mitmproxy (see docker/mitm/atlas_addon.py), which posts
@@ -90,9 +92,35 @@ public class MobileExplorer {
         return o;
     }
 
+    private static final Set<String> ALLOWED_CAPABILITIES = Set.of(
+            "platformVersion", "automationName", "appActivity", "appWaitActivity", "noReset", "fullReset",
+            "autoGrantPermissions", "newCommandTimeout", "language", "locale");
+    private static final Pattern PACKAGE_ID = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+$");
+    private static final Pattern APP_FILE = Pattern.compile("^[\\w.-]+\\.(apk|ipa|app)$");
+
+    /** Rejects capabilities and app targets that would let the Appium server fetch URLs or read arbitrary files. */
+    public static void validate(StartDiscoveryRequest req) {
+        String t = req.target();
+        if (t == null || !(PACKAGE_ID.matcher(t).matches() || (APP_FILE.matcher(t).matches() && !t.contains("..")))) {
+            throw new IllegalArgumentException("Mobile target must be a package/bundle id or a plain app file name");
+        }
+        if (req.capabilities() != null) {
+            for (String key : req.capabilities().keySet()) {
+                String k = key.startsWith("appium:") ? key.substring(7) : key;
+                if (!ALLOWED_CAPABILITIES.contains(k)) {
+                    throw new IllegalArgumentException("Capability not allowed: " + key);
+                }
+            }
+        }
+    }
+
     private static void common(MutableCapabilities o, StartDiscoveryRequest req) {
+        validate(req);
         if (req.deviceName() != null) o.setCapability("appium:deviceName", req.deviceName());
         if (req.udid() != null) o.setCapability("appium:udid", req.udid());
-        if (req.capabilities() != null) req.capabilities().forEach(o::setCapability);
+        if (req.capabilities() != null) {
+            req.capabilities().forEach((k, v) -> o.setCapability(
+                    k.startsWith("appium:") || k.equals("platformVersion") ? k : "appium:" + k, v));
+        }
     }
 }

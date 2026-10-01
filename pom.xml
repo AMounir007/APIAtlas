@@ -23,9 +23,9 @@
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <playwright.version>1.47.0</playwright.version>
-        <appium.version>9.3.0</appium.version>
+        <appium.version>10.1.1</appium.version>
         <swagger-parser.version>2.1.22</swagger-parser.version>
-        <poi.version>5.3.0</poi.version>
+        <poi.version>5.4.0</poi.version>
         <openpdf.version>2.0.3</openpdf.version>
         <commons-csv.version>1.12.0</commons-csv.version>
         <mapstruct.version>1.6.2</mapstruct.version>

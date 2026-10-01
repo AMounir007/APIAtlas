@@ -93,7 +93,8 @@ public class TrafficIngestionService {
             }
             return Optional.of(result.endpoint());
         } catch (Exception ex) {
-            log.warn("Failed to ingest {} {}: {}", t.method(), t.url(), ex.toString());
+            log.warn("Failed to ingest {} {}: {}", t.method().replaceAll("[\\p{Cntrl}]", "_"),
+                    t.url().replaceAll("[\\p{Cntrl}]", "_"), ex.getClass().getSimpleName());
             return Optional.empty();
         } finally {
             lock.unlock();

@@ -38,11 +38,14 @@ public class DiscoveryService {
     private final ExecutorService pool;
     private final Map<Long, AtomicBoolean> running = new ConcurrentHashMap<>();
     private final List<String> allowedHosts;
+    private final boolean allowPrivateTargets;
 
     public DiscoveryService(AtlasProperties props, DiscoverySessionRepository sessions, WebCrawler webCrawler,
                             MobileExplorer mobileExplorer, TrafficIngestionService ingestion, AiAnalysisService ai,
                             TrafficPublisher publisher,
-                            @org.springframework.beans.factory.annotation.Value("${ATLAS_ALLOWED_HOSTS:}") String allowed) {
+                            @org.springframework.beans.factory.annotation.Value("${ATLAS_ALLOWED_HOSTS:}") String allowed,
+                            @org.springframework.beans.factory.annotation.Value("${ATLAS_ALLOW_PRIVATE_TARGETS:false}") boolean allowPrivate) {
+        this.allowPrivateTargets = allowPrivate;
         this.allowedHosts = java.util.Arrays.stream(allowed.split(","))
                 .map(String::trim).filter(s -> !s.isEmpty()).map(s -> s.toLowerCase(java.util.Locale.ROOT)).toList();
         this.props = props;
@@ -126,6 +129,9 @@ public class DiscoveryService {
     }
 
     private void validate(StartDiscoveryRequest req) {
+        if (req.type() != SessionType.WEB) {
+            MobileExplorer.validate(req);
+        }
         if (req.type() == SessionType.WEB) {
             URI u;
             try {
@@ -135,6 +141,10 @@ public class DiscoveryService {
             }
             if (u.getHost() == null || !("http".equals(u.getScheme()) || "https".equals(u.getScheme()))) {
                 throw new IllegalArgumentException("Web target must be an http(s) URL");
+            }
+            if (!allowPrivateTargets && com.apiatlas.utility.UrlGuard.isInternal(u.getHost())) {
+                throw new IllegalArgumentException(
+                        "Target resolves to an internal address (set ATLAS_ALLOW_PRIVATE_TARGETS=true to allow in test environments)");
             }
             if (!allowedHosts.isEmpty()) {
                 String host = u.getHost().toLowerCase(java.util.Locale.ROOT);
