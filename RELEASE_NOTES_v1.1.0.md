@@ -2,17 +2,17 @@
 
 **Heads-up:** 3 behavior changes; read "Behavior changes to note" below before upgrading (internal discovery targets are blocked by default, `prod` will not start with default secrets, mitmproxy is no longer reachable from other machines).
 
-This release brings 7 security fixes, 2 dependency upgrades and 2 new review documents for API Atlas users.
+This release brings 7 security fixes, 2 dependency upgrades, automated security scanning (CodeQL, Trivy, Dependabot) and automated release publishing for API Atlas users.
 
-**Highlights:** SSRF guard for web discovery; fail-fast on default secrets in `prod`; crawler headers limited to the start origin; mobile target and capability allow-list.
+**Highlights:** SSRF guard for web discovery; fail-fast on default secrets in `prod`; crawler headers limited to the start origin; mobile target and capability allow-list; CI/CD, CodeQL and Trivy workflows; releases published automatically from release-notes files.
 
 ---
 
 Date: 2026-10-01. Previous release: v1.0.0 (`RELEASE_NOTES.md`).
 
-> **Status: not yet built or tested.** These changes were made without a working terminal, so `mvn clean verify` has not been run. Run it and confirm the items marked "verify" before tagging this release.
+> **Status: not yet built or tested.** These changes were made without a working terminal, so `mvn clean verify` has not been run. The new CI workflow (Actions → CI/CD → Run workflow) is the first build; confirm it is green and the items marked "verify" below before relying on this release.
 
-> **Publishing:** the first three lines above are what GitHub shows in the Releases section and in followers' feeds. Paste this whole file as the description when creating the `v1.1.0` release by hand. Later releases get the same header added automatically by `.github/workflows/release.yml`.
+> **Publishing:** the first lines above are what GitHub shows in the Releases section and in followers' feeds. Pushing this file to `main` publishes the release through `.github/workflows/publish-release.yml`.
 
 ## Security fixes
 - **SSRF guard for web discovery.** Targets that are, or resolve to, loopback, private, link-local, cloud-metadata (169.254.x.x) or carrier-grade NAT addresses are rejected. Set `ATLAS_ALLOW_PRIVATE_TARGETS=true` to allow them in local test environments (new `UrlGuard`, `DiscoveryService`).
