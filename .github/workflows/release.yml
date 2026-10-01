@@ -13,8 +13,50 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - id: rp
+        uses: googleapis/release-please-action@v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  announce:
+    # Pins a short "what's new" notice to the Actions summary of every release; the GitHub Release itself
+    # (created above) is what notifies watchers and appears under the repo's Releases section.
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add a summary header to the release
+        # GitHub's feed card shows only the first lines of the release body, so the summary goes first.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release view "$TAG" --repo "$REPO" --json body --jq .body > body.md
+          section() { awk -v h="### $1" '$0==h{f=1;next} /^### /{f=0} f && /^\* /' body.md; }
+          features=$(section "Features" | wc -l)
+          fixes=$(section "Bug Fixes" | wc -l)
+          security=$(section "Security" | wc -l)
+          breaking=$(grep -c -i 'BREAKING' body.md || true)
+          highlights=$(section "Features" | sed -E 's/^\* (\*\*[^*]+\*\* )?//; s/ \(\[.*$//' | head -3 | paste -sd ';' - | sed 's/;/; /g')
+          {
+            if [ "$breaking" -gt 0 ]; then
+              echo "**Heads-up:** $breaking breaking change(s); read the notes below before upgrading."
+              echo
+            fi
+            echo "This release brings $features new feature(s), $fixes fix(es) and $security security update(s)."
+            echo
+            [ -n "$highlights" ] && echo "**Highlights:** $highlights"
+            echo
+            echo "---"
+            echo
+            cat body.md
+          } > notes.md
+          gh release edit "$TAG" --repo "$REPO" --notes-file notes.md
+          echo "### Released $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$REPO/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"

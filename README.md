@@ -1,6 +1,13 @@
 # API Atlas
 **Discover. Map. Document.**
 
+[![Latest release](https://img.shields.io/github/v/release/AMounir007/APIAtlas?display_name=tag&sort=semver)](https://github.com/AMounir007/APIAtlas/releases/latest)
+[![Last commit](https://img.shields.io/github/last-commit/AMounir007/APIAtlas)](https://github.com/AMounir007/APIAtlas/commits/main)
+[![Changelog](https://img.shields.io/badge/changelog-CHANGELOG.md-blue)](CHANGELOG.md)
+
+> **What's new:** see the [latest release](https://github.com/AMounir007/APIAtlas/releases/latest) and the [full changelog](CHANGELOG.md).
+> **Stay updated:** click **Watch → Custom → Releases** at the top of this page to be notified of every new release.
+
 API Atlas is an AI-powered enterprise platform that automatically discovers, maps, documents, analyzes, and exports APIs from web and mobile applications without requiring source code access.
 
 ## Capabilities
