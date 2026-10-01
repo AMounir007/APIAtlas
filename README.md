@@ -1,4 +1,5 @@
 # API Atlas
+![image alt](https://github.com/AMounir007/APIAtlas/blob/c878982c00bd128dbd07de7bb3e0865170c85e27/APIAtlas.jpg)
 **Discover. Map. Document.**
 
 [![Latest release](https://img.shields.io/github/v/release/AMounir007/APIAtlas?display_name=tag&sort=semver)](https://github.com/AMounir007/APIAtlas/releases/latest)
