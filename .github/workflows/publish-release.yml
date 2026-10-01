@@ -1,7 +1,8 @@
 name: Publish release from notes file
 
 # Creates a GitHub Release (shown under Releases and in followers' feeds) from RELEASE_NOTES_<tag>.md.
-# Run it from Actions -> "Publish release from notes file" -> Run workflow, or push a tag such as v1.1.0.
+# Fully automatic: add or edit RELEASE_NOTES_v1.2.0.md, push it to main, and release v1.2.0 is published.
+# It can also be run by hand (Actions -> Run workflow) or by pushing a tag such as v1.1.0.
 on:
   workflow_dispatch:
     inputs:
@@ -11,6 +12,8 @@ on:
         default: "v1.1.0"
   push:
     tags: ["v*"]
+    branches: [main]
+    paths: ["RELEASE_NOTES_v*.md"]
 
 permissions:
   contents: write
@@ -20,24 +23,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Create or update the release
+      - name: Create or update the release(s)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          file="RELEASE_NOTES_${TAG}.md"
-          if [ ! -f "$file" ]; then
-            echo "::error::$file not found; add it to the repo first"
-            exit 1
-          fi
-          # Drop the internal "Publishing" hint; the summary header must stay at the top of the body.
-          grep -v '^> \*\*Publishing' "$file" > notes.md
-          title=$(head -1 notes.md | sed 's/^# *//')
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "$title" --notes-file notes.md
+          if [ -n "$INPUT_TAG" ]; then
+            tags="$INPUT_TAG"
+          elif [ "$REF_TYPE" = "tag" ]; then
+            tags="$REF_NAME"
           else
-            gh release create "$TAG" --target "${{ github.sha }}" --title "$title" --notes-file notes.md
+            # push to main: publish every release-notes file added or changed in this push
+            tags=$(git diff --name-only HEAD^ HEAD -- 'RELEASE_NOTES_v*.md' | sed -E 's/^RELEASE_NOTES_(v.*)\.md$/\1/')
           fi
-          echo "### Published $TAG" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/${{ github.repository }}/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+          [ -z "$tags" ] && { echo "No release notes changed; nothing to publish."; exit 0; }
+
+          for TAG in $tags; do
+            file="RELEASE_NOTES_${TAG}.md"
+            if [ ! -f "$file" ]; then
+              echo "::error::$file not found; add it to the repo first"
+              exit 1
+            fi
+            # Drop the internal "Publishing" hint; the summary header must stay at the top of the body.
+            grep -v '^> \*\*Publishing' "$file" > notes.md
+            title=$(grep -m1 '^# ' notes.md | sed 's/^# *//')
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release edit "$TAG" --title "$title" --notes-file notes.md
+            else
+              gh release create "$TAG" --target "${{ github.sha }}" --title "$title" --notes-file notes.md
+            fi
+            echo "### Published $TAG" >> "$GITHUB_STEP_SUMMARY"
+            echo "https://github.com/${{ github.repository }}/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+          done
