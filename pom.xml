@@ -30,7 +30,7 @@
         <commons-csv.version>1.12.0</commons-csv.version>
         <mapstruct.version>1.6.2</mapstruct.version>
         <testcontainers.version>1.20.2</testcontainers.version>
-        <rest-assured.version>5.5.0</rest-assured.version>
+        <rest-assured.version>6.0.1</rest-assured.version>
     </properties>
 
     <dependencyManagement>
